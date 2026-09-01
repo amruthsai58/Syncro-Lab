@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { PROBLEM_LIST, MOCK_USER } from '../data/mockData';
+import { MOCK_USER } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
+import { useProblems } from '../context/ProblemContext';
 import type { ProblemListItem, Difficulty } from '../types';
 import { Search, Filter, CheckCircle2, Circle, Minus, ChevronRight, Tag, Award, ArrowRight, QrCode } from 'lucide-react';
 
@@ -82,6 +83,7 @@ function ProblemRow({ problem, index }: { problem: ProblemListItem; index: numbe
 
 export function ProblemCatalog() {
   const { user: authUser } = useAuth();
+  const { problems } = useProblems();
   const user = authUser ?? MOCK_USER;
 
   const [search, setSearch] = useState('');
@@ -89,23 +91,35 @@ export function ProblemCatalog() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  const problemList: ProblemListItem[] = useMemo(() => {
+    return problems.map(p => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      difficulty: p.difficulty,
+      tags: p.tags,
+      companyTags: p.companyTags,
+      acceptanceRate: p.acceptanceRate,
+    }));
+  }, [problems]);
+
   const filtered = useMemo(() =>
-    PROBLEM_LIST.filter(p => {
+    problemList.filter(p => {
       if (difficulty !== 'All' && p.difficulty !== difficulty) return false;
       if (search && !p.title.toLowerCase().includes(search.toLowerCase()) &&
           !p.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))) return false;
       if (selectedTags.length > 0 && !selectedTags.every(t => p.tags.includes(t))) return false;
       return true;
-    }), [search, difficulty, selectedTags]);
+    }), [problemList, search, difficulty, selectedTags]);
 
   const toggleTag = (tag: string) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
 
   const counts = useMemo(() => ({
-    easy: PROBLEM_LIST.filter(p => p.difficulty === 'Easy').length,
-    medium: PROBLEM_LIST.filter(p => p.difficulty === 'Medium').length,
-    hard: PROBLEM_LIST.filter(p => p.difficulty === 'Hard').length,
-  }), []);
+    easy: problemList.filter(p => p.difficulty === 'Easy').length,
+    medium: problemList.filter(p => p.difficulty === 'Medium').length,
+    hard: problemList.filter(p => p.difficulty === 'Hard').length,
+  }), [problemList]);
 
   // Certificate completion percentages
   const easyPct = Math.round((user.easySolved / Math.max(1, counts.easy)) * 100);

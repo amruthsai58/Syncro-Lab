@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HexagonLogo, HexLoader } from '../components/HexagonLogo';
+import { DeviceModal } from '../components/DeviceModal';
 import { Code2, TrendingUp, Users, ArrowRight, Star, Zap, Award, CheckCircle2, ShieldCheck, QrCode } from 'lucide-react';
 
 const PILLARS = [
@@ -64,12 +65,14 @@ const STATS = [
 
 
 export function LandingPage() {
-  const { isAuthenticated, isLoading, enterWithName } = useAuth();
+  const { isAuthenticated, isLoading, enterWithName, setDevicePreference } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [nameVisible, setNameVisible] = useState(false);
+  const [showDeviceModal, setShowDeviceModal] = useState(false);
+  const [pendingName, setPendingName] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) navigate('/problems', { replace: true });
@@ -86,9 +89,17 @@ export function LandingPage() {
     if (!trimmed) { setError('Enter your name to continue.'); return; }
     if (trimmed.length < 2) { setError('Name must be at least 2 characters.'); return; }
     if (trimmed.length > 24) { setError('Name must be 24 characters or less.'); return; }
-    setIsSubmitting(true);
+    
     setError('');
-    await enterWithName(trimmed);
+    setPendingName(trimmed);
+    setShowDeviceModal(true);
+  };
+
+  const handleDeviceSelect = async (mode: 'desktop' | 'mobile') => {
+    setDevicePreference(mode);
+    setIsSubmitting(true);
+    await enterWithName(pendingName);
+    setShowDeviceModal(false);
     navigate('/problems');
   };
 
@@ -290,6 +301,13 @@ export function LandingPage() {
         <HexagonLogo size={28} showText className="justify-center mb-3" />
         <p className="text-syncro-white-dim text-xs">© 2026 SYNCRO LAB — Code · Practice · Evolve. Certified by BACKBENCHERS.</p>
       </footer>
+
+      {/* Post-Login Device Selection Modal */}
+      <DeviceModal
+        isOpen={showDeviceModal}
+        candidateName={pendingName}
+        onSelect={handleDeviceSelect}
+      />
 
     </div>
   );

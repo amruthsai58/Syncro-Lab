@@ -1,173 +1,50 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-import { PROBLEMS } from '../data/mockData';
+import { useProblems } from '../context/ProblemContext';
+import { useAuth } from '../context/AuthContext';
 import type { Language, VerdictStatus, Submission } from '../types';
 import {
   Play, Send, ChevronLeft, Clock, Database, CheckCircle2,
-  XCircle, AlertTriangle, Loader2, BookOpen, ChevronDown, Copy, Check, Terminal, Award, Code2, Sparkles, SlidersHorizontal, Cpu, CheckCircle, Wrench
+  XCircle, AlertTriangle, Loader2, BookOpen, ChevronDown, Copy, Check, Terminal,
+  Award, Code2, Sparkles, SlidersHorizontal, Cpu, CheckCircle, Wrench, Download,
+  Monitor, Smartphone
 } from 'lucide-react';
 
-const LANGUAGES: { value: Language; label: string; monaco: string; compiler: string }[] = [
-  { value: 'python',     label: 'Python 3',    monaco: 'python',     compiler: 'CPython 3.12 (py_compile)' },
-  { value: 'java',       label: 'Java 21',      monaco: 'java',       compiler: 'OpenJDK 21 (javac)'        },
-  { value: 'cpp',        label: 'C++ 17',       monaco: 'cpp',        compiler: 'GCC 13.2 (g++ -O3)'        },
-  { value: 'javascript', label: 'JavaScript',   monaco: 'javascript', compiler: 'Node.js 20 (V8 JIT)'       },
-  { value: 'go',         label: 'Go 1.21',      monaco: 'go',         compiler: 'Go Compiler 1.21'          },
+const LANGUAGES: { value: Language; label: string; monaco: string; ext: string; compiler: string }[] = [
+  { value: 'python',     label: 'Python 3',    monaco: 'python',     ext: 'py',   compiler: 'CPython 3.12 (py_compile)' },
+  { value: 'java',       label: 'Java 21',      monaco: 'java',       ext: 'java', compiler: 'OpenJDK 21 (javac)'        },
+  { value: 'cpp',        label: 'C++ 17',       monaco: 'cpp',        ext: 'cpp',  compiler: 'GCC 13.2 (g++ -O3)'        },
+  { value: 'javascript', label: 'JavaScript',   monaco: 'javascript', ext: 'js',   compiler: 'Node.js 20 (V8 JIT)'       },
+  { value: 'go',         label: 'Go 1.21',      monaco: 'go',         ext: 'go',   compiler: 'Go Compiler 1.21'          },
 ];
 
-// Problem test case definitions with reference solutions for computing actual outputs
-const PROBLEM_TEST_SUITES: Record<string, {
-  defaultCases: { input: string; expected: string | null }[];
-  solver: (input: string) => string;
-}> = {
-  'two-sum': {
-    defaultCases: [
-      { input: 'nums = [2,7,11,15], target = 9', expected: null },
-      { input: 'nums = [3,2,4], target = 6', expected: null },
-      { input: 'nums = [3,3], target = 6', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const numsMatch = rawInput.match(/nums\s*=\s*(\[[^\]]+\])/);
-        const targetMatch = rawInput.match(/target\s*=\s*(-?\d+)/);
-        if (!numsMatch || !targetMatch) return '[0, 1]';
+// Fallback test evaluator
+function executeProblemCode(slug: string, rawInput: string, userCode: string): { output: string; stdout?: string; isError?: boolean } {
+  const hasCode = userCode.trim().length > 5;
+  if (!hasCode) {
+    return { output: 'null', stdout: 'Warning: No code written in the editor.', isError: true };
+  }
+
+  // Two sum evaluation
+  if (slug === 'two-sum') {
+    try {
+      const numsMatch = rawInput.match(/nums\s*=\s*(\[[^\]]+\])/);
+      const targetMatch = rawInput.match(/target\s*=\s*(-?\d+)/);
+      if (numsMatch && targetMatch) {
         const nums: number[] = JSON.parse(numsMatch[1]);
         const target = parseInt(targetMatch[1], 10);
         const map = new Map<number, number>();
         for (let i = 0; i < nums.length; i++) {
           const comp = target - nums[i];
-          if (map.has(comp)) return `[${map.get(comp)}, ${i}]`;
+          if (map.has(comp)) return { output: `[${map.get(comp)}, ${i}]`, stdout: 'Test evaluation completed.' };
           map.set(nums[i], i);
         }
-        return '[]';
-      } catch {
-        return '[0, 1]';
       }
+      return { output: '[0, 1]', stdout: 'Test evaluation completed.' };
+    } catch {
+      return { output: '[0, 1]', stdout: 'Test evaluation completed.' };
     }
-  },
-  'valid-parentheses': {
-    defaultCases: [
-      { input: 's = "()"', expected: null },
-      { input: 's = "()[]{}"', expected: null },
-      { input: 's = "(]"', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const match = rawInput.match(/s\s*=\s*["']([^"']*)["']/);
-        const s = match ? match[1] : rawInput.replace(/[^()\[\]{}]/g, '');
-        const stack: string[] = [];
-        const pairs: Record<string, string> = { ')': '(', '}': '{', ']': '[' };
-        for (const ch of s) {
-          if (ch === '(' || ch === '{' || ch === '[') stack.push(ch);
-          else if (pairs[ch]) {
-            if (stack.pop() !== pairs[ch]) return 'false';
-          }
-        }
-        return stack.length === 0 ? 'true' : 'false';
-      } catch {
-        return 'true';
-      }
-    }
-  },
-  'merge-two-sorted-lists': {
-    defaultCases: [
-      { input: 'list1 = [1,2,4], list2 = [1,3,4]', expected: null },
-      { input: 'list1 = [], list2 = []', expected: null },
-      { input: 'list1 = [1], list2 = [0]', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const m1 = rawInput.match(/list1\s*=\s*(\[[^\]]*\])/);
-        const m2 = rawInput.match(/list2\s*=\s*(\[[^\]]*\])/);
-        const a: number[] = m1 ? JSON.parse(m1[1]) : [];
-        const b: number[] = m2 ? JSON.parse(m2[1]) : [];
-        const res = [...a, ...b].sort((x, y) => x - y);
-        return JSON.stringify(res);
-      } catch {
-        return '[1, 1, 2, 3, 4, 4]';
-      }
-    }
-  },
-  'maximum-subarray': {
-    defaultCases: [
-      { input: 'nums = [-2,1,-3,4,-1,2,1,-5,4]', expected: null },
-      { input: 'nums = [1]', expected: null },
-      { input: 'nums = [5,4,-1,7,8]', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const m = rawInput.match(/nums\s*=\s*(\[[^\]]+\])/);
-        const nums: number[] = m ? JSON.parse(m[1]) : [-2, 1, -3, 4, -1, 2, 1, -5, 4];
-        let max = nums[0], cur = nums[0];
-        for (let i = 1; i < nums.length; i++) {
-          cur = Math.max(nums[i], cur + nums[i]);
-          max = Math.max(max, cur);
-        }
-        return String(max);
-      } catch {
-        return '6';
-      }
-    }
-  },
-  'climbing-stairs': {
-    defaultCases: [
-      { input: 'n = 2', expected: null },
-      { input: 'n = 3', expected: null },
-      { input: 'n = 5', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const m = rawInput.match(/n\s*=\s*(\d+)/);
-        const n = m ? parseInt(m[1], 10) : 2;
-        if (n <= 2) return String(n);
-        let a = 1, b = 2;
-        for (let i = 3; i <= n; i++) {
-          const c = a + b;
-          a = b;
-          b = c;
-        }
-        return String(b);
-      } catch {
-        return '2';
-      }
-    }
-  },
-  'binary-search': {
-    defaultCases: [
-      { input: 'nums = [-1,0,3,5,9,12], target = 9', expected: null },
-      { input: 'nums = [-1,0,3,5,9,12], target = 2', expected: null },
-    ],
-    solver: (rawInput: string) => {
-      try {
-        const m1 = rawInput.match(/nums\s*=\s*(\[[^\]]+\])/);
-        const m2 = rawInput.match(/target\s*=\s*(-?\d+)/);
-        const nums: number[] = m1 ? JSON.parse(m1[1]) : [-1, 0, 3, 5, 9, 12];
-        const target = m2 ? parseInt(m2[1], 10) : 9;
-        const idx = nums.indexOf(target);
-        return String(idx);
-      } catch {
-        return '4';
-      }
-    }
-  },
-};
-
-// Fallback generic solver for other problems
-function executeProblemCode(slug: string, rawInput: string, userCode: string): { output: string; stdout?: string; isError?: boolean } {
-  const suite = PROBLEM_TEST_SUITES[slug];
-  const hasCode = userCode.trim().length > 10;
-  
-  if (!hasCode) {
-    return { output: 'null', stdout: 'Warning: No solution logic detected in editor.', isError: true };
-  }
-
-  if (suite) {
-    const computed = suite.solver(rawInput);
-    return {
-      output: computed,
-      stdout: `[Execution Engine]: Function returned output successfully.\n[Allocations]: 14.8MB heap, 0 memory leaks.`,
-    };
   }
 
   return {
@@ -178,20 +55,21 @@ function executeProblemCode(slug: string, rawInput: string, userCode: string): {
 
 export function WorkspacePage() {
   const { slug } = useParams<{ slug: string }>();
-  const problem = PROBLEMS.find(p => p.slug === slug);
-  const suite = problem ? PROBLEM_TEST_SUITES[problem.slug] : null;
-
-  const defaultCases = suite?.defaultCases ?? [
-    { input: problem?.examples[0]?.input ?? 'input = [1, 2, 3]', expected: 'output' },
-    { input: problem?.examples[1]?.input ?? 'input = [4, 5, 6]', expected: 'output' },
-  ];
+  const { getProblemBySlug } = useProblems();
+  const { user, devicePreference, setDevicePreference } = useAuth();
+  
+  const problem = getProblemBySlug(slug || '');
 
   const [language, setLanguage] = useState<Language>('python');
   const [code, setCode] = useState(problem?.starterCode.python ?? '');
+  
+  // Desktop vs Mobile active view tab for mobile mode
+  const [mobileTab, setMobileTab] = useState<'description' | 'editor' | 'console'>('editor');
+  
   const [activeTab, setActiveTab] = useState<'description' | 'submissions'>('description');
   const [activeConsoleTab, setActiveConsoleTab] = useState<'testcase' | 'compile' | 'result'>('testcase');
   const [selectedCaseIdx, setSelectedCaseIdx] = useState<number>(0);
-  const [customInput, setCustomInput] = useState<string>(defaultCases[0]?.input ?? '');
+  const [customInput, setCustomInput] = useState<string>(problem?.examples[0]?.input ?? 'nums = [2, 7, 11, 15], target = 9');
   
   // Compilation State
   const [isCompiling, setIsCompiling] = useState(false);
@@ -217,9 +95,11 @@ export function WorkspacePage() {
   const [submission, setSubmission] = useState<Partial<Submission> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const editorRef = useRef<unknown>(null);
 
   const currentLangObj = LANGUAGES.find(l => l.value === language) || LANGUAGES[0];
+  const isMobileLayout = devicePreference === 'mobile';
 
   const handleLanguageChange = useCallback((lang: Language) => {
     setLanguage(lang);
@@ -231,16 +111,49 @@ export function WorkspacePage() {
 
   const handleSelectCase = (idx: number) => {
     setSelectedCaseIdx(idx);
-    if (defaultCases[idx]) {
-      setCustomInput(defaultCases[idx].input);
+    if (problem?.examples[idx]) {
+      setCustomInput(problem.examples[idx].input);
     }
   };
+
+  // ─── Download User's Answered Program ───
+  const handleDownloadCode = useCallback(() => {
+    if (!problem) return;
+    const langInfo = currentLangObj;
+    const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    const author = user?.displayName || 'SYNCRO Candidate';
+
+    const header = [
+      `/**`,
+      ` * SYNCRO LAB — Candidate Solution Export`,
+      ` * Problem: ${problem.title} (${problem.difficulty})`,
+      ` * Candidate: ${author}`,
+      ` * Date: ${timestamp}`,
+      ` * Language: ${langInfo.label}`,
+      ` */\n\n`,
+    ].join('\n');
+
+    const fileContent = header + code;
+    const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${problem.slug}_solution.${langInfo.ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2500);
+  }, [problem, currentLangObj, user, code]);
 
   // ─── 1. Separate Option: Compile Program ───
   const handleCompileCode = useCallback(() => {
     if (isCompiling || isRunning || isSubmitting) return;
     setIsCompiling(true);
     setActiveConsoleTab('compile');
+    if (isMobileLayout) setMobileTab('console');
 
     setTimeout(() => {
       const hasCode = code.trim().length > 5;
@@ -263,27 +176,27 @@ export function WorkspacePage() {
       }
       setIsCompiling(false);
     }, 550);
-  }, [isCompiling, isRunning, isSubmitting, code, currentLangObj]);
+  }, [isCompiling, isRunning, isSubmitting, code, currentLangObj, isMobileLayout]);
 
   // ─── 2. Separate Option: Run Program with Testcase Input ───
   const handleRunCode = useCallback(() => {
     if (isRunning || isCompiling || isSubmitting) return;
     setIsRunning(true);
     setActiveConsoleTab('result');
+    if (isMobileLayout) setMobileTab('console');
 
     setTimeout(() => {
       const startTime = performance.now();
-      const currentInput = customInput.trim() || defaultCases[selectedCaseIdx]?.input || 'nums = [2, 7, 11, 15], target = 9';
+      const currentInput = customInput.trim() || problem?.examples[selectedCaseIdx]?.input || 'nums = [2, 7, 11, 15], target = 9';
       const exec = executeProblemCode(problem?.slug ?? 'two-sum', currentInput, code);
       const elapsed = Math.round(performance.now() - startTime + Math.random() * 30 + 15);
 
-      const expected = defaultCases[selectedCaseIdx]?.expected || exec.output;
       const isAccepted = !exec.isError && exec.output !== 'null';
 
       setRunResult({
         input: currentInput,
         output: exec.output,
-        expected: expected,
+        expected: 'null',
         runtimeMs: elapsed,
         memoryMb: (Math.random() * 3 + 14.1).toFixed(1),
         status: isAccepted ? 'Accepted' : 'Wrong Answer',
@@ -292,13 +205,14 @@ export function WorkspacePage() {
 
       setIsRunning(false);
     }, 600);
-  }, [isRunning, isCompiling, isSubmitting, customInput, selectedCaseIdx, defaultCases, problem, code]);
+  }, [isRunning, isCompiling, isSubmitting, customInput, selectedCaseIdx, problem, code, isMobileLayout]);
 
   // ─── 3. Full Solution Submission ───
   const handleSubmit = useCallback(async () => {
     if (isSubmitting || isRunning || isCompiling) return;
     setIsSubmitting(true);
     setActiveConsoleTab('result');
+    if (isMobileLayout) setMobileTab('console');
     setSubmission({ status: 'Running' });
 
     setTimeout(() => {
@@ -316,9 +230,9 @@ export function WorkspacePage() {
       });
 
       setRunResult({
-        input: customInput || defaultCases[0]?.input || '',
-        output: executeProblemCode(problem?.slug ?? 'two-sum', customInput || defaultCases[0]?.input || '', code).output,
-        expected: defaultCases[0]?.expected || '',
+        input: customInput || problem?.examples[0]?.input || '',
+        output: executeProblemCode(problem?.slug ?? 'two-sum', customInput || problem?.examples[0]?.input || '', code).output,
+        expected: 'null',
         runtimeMs: Math.floor(Math.random() * 40 + 20),
         memoryMb: '14.8',
         status: status === 'Accepted' ? 'Accepted' : 'Wrong Answer',
@@ -327,7 +241,7 @@ export function WorkspacePage() {
 
       setIsSubmitting(false);
     }, 1000);
-  }, [isSubmitting, isRunning, isCompiling, code, customInput, defaultCases, problem]);
+  }, [isSubmitting, isRunning, isCompiling, code, customInput, problem, isMobileLayout]);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code);
@@ -354,26 +268,65 @@ export function WorkspacePage() {
             <ChevronLeft size={16} /> Problems
           </Link>
           <div className="h-4 w-px bg-syncro-black-border" />
-          <span className="text-sm font-extrabold text-white truncate">{problem.title}</span>
-          <span className={`ml-2 ${
+          <span className="text-sm font-extrabold text-white truncate max-w-[140px] sm:max-w-xs">{problem.title}</span>
+          <span className={`ml-1 sm:ml-2 ${
             problem.difficulty === 'Easy' ? 'badge-easy' : problem.difficulty === 'Medium' ? 'badge-medium' : 'badge-hard'
           }`}>
             {problem.difficulty}
           </span>
         </div>
 
-        <Link
-          to="/certificates"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-syncro-gold/10 border border-syncro-gold/30 text-syncro-gold-light text-xs font-bold hover:bg-syncro-gold/20 transition-colors"
-        >
-          <Award size={14} className="text-syncro-gold" /> 80%+ Track Certificate
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Device Switcher Toggle */}
+          <button
+            onClick={() => setDevicePreference(devicePreference === 'mobile' ? 'desktop' : 'mobile')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-syncro-black border border-syncro-black-border text-syncro-white-dim hover:text-white text-[11px] font-semibold transition-colors"
+            title={`Switch to ${devicePreference === 'mobile' ? 'Desktop' : 'Mobile'} layout`}
+          >
+            {devicePreference === 'mobile' ? <Smartphone size={13} className="text-syncro-gold" /> : <Monitor size={13} className="text-syncro-gold" />}
+            <span className="hidden md:inline">{devicePreference === 'mobile' ? 'Mobile Mode' : 'Desktop Mode'}</span>
+          </button>
+
+          <Link
+            to="/certificates"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-syncro-gold/10 border border-syncro-gold/30 text-syncro-gold-light text-xs font-bold hover:bg-syncro-gold/20 transition-colors"
+          >
+            <Award size={14} className="text-syncro-gold" /> 80%+ Track
+          </Link>
+        </div>
       </div>
 
+      {/* MOBILE MODE: Top Tab Switcher */}
+      {isMobileLayout && (
+        <div className="flex items-center border-b border-syncro-black-border bg-syncro-black-card px-2">
+          {[
+            { id: 'description', label: 'Problem', icon: BookOpen },
+            { id: 'editor', label: 'Code Editor', icon: Code2 },
+            { id: 'console', label: 'Console / Output', icon: Terminal },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setMobileTab(id as typeof mobileTab)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold border-b-2 transition-all ${
+                mobileTab === id
+                  ? 'border-syncro-gold text-syncro-gold bg-syncro-gold/5'
+                  : 'border-transparent text-syncro-white-dim hover:text-white'
+              }`}
+            >
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main Workspace Layout */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
-        {/* LEFT: Problem Description & Interactive Action Controls */}
-        <div className="w-full md:w-[45%] flex flex-col bg-syncro-black-card border-r border-syncro-black-border overflow-hidden">
+        {/* LEFT / TAB 1: Problem Description */}
+        <div className={`
+          w-full md:w-[45%] flex flex-col bg-syncro-black-card border-r border-syncro-black-border overflow-hidden
+          ${isMobileLayout && mobileTab !== 'description' ? 'hidden' : 'flex'}
+        `}>
           {/* Tabs */}
           <div className="flex border-b border-syncro-black-border px-4 bg-syncro-black-soft">
             {[
@@ -427,32 +380,6 @@ export function WorkspacePage() {
                 </ul>
               </div>
 
-              {/* Quick Action Bar inside problem statement panel */}
-              <div className="p-4 rounded-2xl bg-syncro-black-soft border border-syncro-gold/25 space-y-2">
-                <p className="text-[11px] uppercase font-bold text-syncro-gold tracking-wider">
-                  Program Execution Controls
-                </p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    onClick={handleCompileCode}
-                    disabled={isCompiling || isRunning || isSubmitting}
-                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-syncro-black hover:bg-syncro-black-hover border border-slate-700 text-xs font-bold text-slate-200 transition-colors"
-                  >
-                    <Wrench size={13} className="text-amber-400" />
-                    <span>Compile Code</span>
-                  </button>
-
-                  <button
-                    onClick={handleRunCode}
-                    disabled={isRunning || isCompiling || isSubmitting}
-                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-xs font-bold text-emerald-300 transition-colors"
-                  >
-                    <Play size={13} className="text-emerald-400 fill-emerald-400" />
-                    <span>Run Program</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Topics */}
               <div>
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-syncro-gold mb-2">Topics</h3>
@@ -491,39 +418,51 @@ export function WorkspacePage() {
           )}
         </div>
 
-        {/* RIGHT: Code Editor + Real-Time Interactive Console */}
-        <div className="flex-1 flex flex-col bg-syncro-black-soft overflow-hidden">
+        {/* RIGHT / TAB 2: Code Editor + Bottom Console */}
+        <div className={`
+          flex-1 flex flex-col bg-syncro-black-soft overflow-hidden
+          ${isMobileLayout && mobileTab === 'description' ? 'hidden' : 'flex'}
+        `}>
 
-          {/* Editor Toolbar with Two Separate Options: Compile & Run */}
-          <div className="flex-shrink-0 flex items-center gap-2.5 px-4 py-2.5 bg-syncro-black-card border-b border-syncro-black-border text-white flex-wrap">
+          {/* Editor Toolbar with Download Program Button */}
+          <div className="flex-shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-syncro-black-card border-b border-syncro-black-border text-white flex-wrap">
             <div className="relative">
               <select
                 id="language-select"
                 value={language}
                 onChange={e => handleLanguageChange(e.target.value as Language)}
-                className="appearance-none bg-syncro-black-soft border border-syncro-black-border text-white text-xs font-bold rounded-lg px-3 py-1.5 pr-8 outline-none focus:border-syncro-gold cursor-pointer"
+                className="appearance-none bg-syncro-black-soft border border-syncro-black-border text-white text-xs font-bold rounded-lg px-2.5 sm:px-3 py-1.5 pr-7 outline-none focus:border-syncro-gold cursor-pointer"
               >
                 {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
-              <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-syncro-white-dim pointer-events-none" />
+              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-syncro-white-dim pointer-events-none" />
             </div>
+
+            {/* DOWNLOAD PROGRAM BUTTON */}
+            <button
+              onClick={handleDownloadCode}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-syncro-gold/10 hover:bg-syncro-gold/20 text-syncro-gold-light text-xs font-bold transition-colors border border-syncro-gold/30"
+              title="Download your written source code"
+            >
+              {downloaded ? <><Check size={13} className="text-emerald-400" /> Saved!</> : <><Download size={13} /> Download</>}
+            </button>
 
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-syncro-black-soft hover:bg-syncro-black-hover text-syncro-white-dim text-xs font-medium transition-colors border border-syncro-black-border"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-syncro-black-soft hover:bg-syncro-black-hover text-syncro-white-dim text-xs font-medium transition-colors border border-syncro-black-border"
             >
               {copied ? <><Check size={13} className="text-emerald-400" /> Copied</> : <><Copy size={13} /> Copy</>}
             </button>
 
             <div className="flex-1" />
 
-            {/* OPTION 1: SEPARATE COMPILE BUTTON */}
+            {/* SEPARATE COMPILE BUTTON */}
             <button
               id="compile-btn"
               onClick={handleCompileCode}
               disabled={isCompiling || isRunning || isSubmitting}
-              className="px-3.5 py-1.5 rounded-xl bg-syncro-black-soft hover:bg-syncro-black-hover text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors disabled:opacity-40"
-              title="Compile and verify syntax & types"
+              className="px-3 py-1.5 rounded-xl bg-syncro-black-soft hover:bg-syncro-black-hover text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition-colors disabled:opacity-40"
+              title="Compile and verify syntax"
             >
               {isCompiling ? (
                 <><Loader2 size={13} className="animate-spin text-amber-400" /> Compiling…</>
@@ -532,27 +471,27 @@ export function WorkspacePage() {
               )}
             </button>
 
-            {/* OPTION 2: SEPARATE RUN PROGRAM BUTTON */}
+            {/* SEPARATE RUN PROGRAM BUTTON */}
             <button
               id="run-btn"
               onClick={handleRunCode}
               disabled={isRunning || isCompiling || isSubmitting}
-              className="btn-ghost px-4 py-1.5 text-xs gap-1.5 disabled:opacity-40"
-              title="Run code against selected testcase input and calculate output"
+              className="btn-ghost px-3.5 py-1.5 text-xs gap-1.5 disabled:opacity-40"
+              title="Run code against selected testcase"
             >
               {isRunning ? (
                 <><Loader2 size={13} className="animate-spin text-emerald-400" /> Running…</>
               ) : (
-                <><Play size={13} className="text-emerald-400 fill-emerald-400" /> Run Program</>
+                <><Play size={13} className="text-emerald-400 fill-emerald-400" /> Run</>
               )}
             </button>
 
-            {/* OPTION 3: SUBMIT SOLUTION */}
+            {/* SUBMIT SOLUTION BUTTON */}
             <button
               id="submit-btn"
               onClick={handleSubmit}
               disabled={isRunning || isCompiling || isSubmitting}
-              className="btn-gold px-5 py-1.5 text-xs text-syncro-black font-extrabold gap-1.5 shadow-gold-sm disabled:opacity-40"
+              className="btn-gold px-4 sm:px-5 py-1.5 text-xs text-syncro-black font-extrabold gap-1.5 shadow-gold-sm disabled:opacity-40"
             >
               {isSubmitting ? (
                 <><Loader2 size={13} className="animate-spin text-syncro-black" /> Judging…</>
@@ -562,8 +501,11 @@ export function WorkspacePage() {
             </button>
           </div>
 
-          {/* Monaco Editor */}
-          <div className="flex-1 overflow-hidden">
+          {/* Monaco Editor Container */}
+          <div className={`
+            flex-1 overflow-hidden
+            ${isMobileLayout && mobileTab === 'console' ? 'hidden' : 'block'}
+          `}>
             <Editor
               height="100%"
               language={LANGUAGES.find(l => l.value === language)?.monaco ?? 'python'}
@@ -572,7 +514,7 @@ export function WorkspacePage() {
               onMount={editor => { editorRef.current = editor; }}
               theme="vs-dark"
               options={{
-                fontSize: 14,
+                fontSize: isMobileLayout ? 12 : 14,
                 fontFamily: "'JetBrains Mono', monospace",
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
@@ -587,7 +529,10 @@ export function WorkspacePage() {
           </div>
 
           {/* ─── Bottom Interactive Testcase & Compiler Output Console ─── */}
-          <div className="flex-shrink-0 h-64 border-t border-syncro-black-border bg-syncro-black-card flex flex-col text-white">
+          <div className={`
+            flex-shrink-0 border-t border-syncro-black-border bg-syncro-black-card flex flex-col text-white
+            ${isMobileLayout ? (mobileTab === 'console' ? 'flex-1 h-full' : 'hidden') : 'h-64'}
+          `}>
             {/* Console Header Tabs */}
             <div className="flex items-center justify-between px-4 bg-syncro-black-soft border-b border-syncro-black-border h-10">
               <div className="flex items-center gap-2">
@@ -643,7 +588,7 @@ export function WorkspacePage() {
             {activeConsoleTab === 'testcase' && (
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {defaultCases.map((_, idx) => (
+                  {problem.examples.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSelectCase(idx)}
@@ -703,7 +648,7 @@ export function WorkspacePage() {
                     <Wrench size={26} className="text-amber-400 opacity-60" />
                     <p className="font-sans text-xs">No compilation logs yet.</p>
                     <p className="font-sans text-[11px] text-slate-500">
-                      Click <strong className="text-amber-400">Compile Code</strong> to verify syntax and generate bytecode diagnostics!
+                      Click <strong className="text-amber-400">Compile</strong> to verify syntax and generate bytecode diagnostics!
                     </p>
                   </div>
                 )}
@@ -727,7 +672,7 @@ export function WorkspacePage() {
                         {runResult.status}
                       </span>
                       <span className="text-[11px] text-syncro-white-dim font-sans">
-                        Click "Run Program" to re-evaluate with modified inputs
+                        Click "Run" to re-evaluate with modified inputs
                       </span>
                     </div>
 
@@ -757,7 +702,7 @@ export function WorkspacePage() {
                     <Play size={28} className="text-emerald-400 opacity-60" />
                     <p className="font-sans text-xs">No execution outputs yet.</p>
                     <p className="font-sans text-[11px] text-slate-500">
-                      Click <strong className="text-emerald-400">Run Program</strong> to execute and compute the output for your input!
+                      Click <strong className="text-emerald-400">Run</strong> to execute and compute the output for your input!
                     </p>
                   </div>
                 )}
