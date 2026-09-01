@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { LEADERBOARD } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { RankHex } from '../components/HexagonLogo';
+import { Footer } from '../components/Footer';
 import { TrendingUp, TrendingDown, Flame, Trophy, Award, Star, UserCheck } from 'lucide-react';
 import type { LeaderboardEntry } from '../types';
 
@@ -221,6 +222,10 @@ export function LeaderboardPage() {
           ))}
         </div>
 
+      </div>
+
+      <div className="mt-20">
+        <Footer />
       </div>
     </div>
   );

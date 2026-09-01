@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { MOCK_USER, PROBLEM_LIST } from '../data/mockData';
 import { CertificateModal } from '../components/CertificateModal';
+import { Footer } from '../components/Footer';
 import { QRCodeSVG } from 'qrcode.react';
 import type { Certificate, CertificateTier, CertificateTrack } from '../types';
 import {
@@ -270,6 +271,10 @@ export function CertificatesPage() {
           </div>
         </div>
 
+      </div>
+
+      <div className="mt-20">
+        <Footer />
       </div>
 
       {/* Certificate Modal */}

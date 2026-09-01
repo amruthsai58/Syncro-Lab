@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MOCK_USER } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { useProblems } from '../context/ProblemContext';
+import { Footer } from '../components/Footer';
 import type { ProblemListItem, Difficulty } from '../types';
 import { Search, Filter, CheckCircle2, Circle, Minus, ChevronRight, Tag, Award, ArrowRight, QrCode } from 'lucide-react';
 
@@ -277,6 +278,10 @@ export function ProblemCatalog() {
           )}
         </div>
 
+      </div>
+
+      <div className="mt-20">
+        <Footer />
       </div>
     </div>
   );

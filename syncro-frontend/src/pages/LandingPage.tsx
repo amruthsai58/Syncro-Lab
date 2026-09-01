@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HexagonLogo, HexLoader } from '../components/HexagonLogo';
 import { DeviceModal } from '../components/DeviceModal';
+import { Footer } from '../components/Footer';
 import { Code2, TrendingUp, Users, ArrowRight, Star, Zap, Award, CheckCircle2, ShieldCheck, QrCode } from 'lucide-react';
 
 const PILLARS = [
@@ -296,11 +297,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-syncro-black-border py-8 bg-syncro-black-soft text-center">
-        <HexagonLogo size={28} showText className="justify-center mb-3" />
-        <p className="text-syncro-white-dim text-xs">© 2026 SYNCRO LAB — Code · Practice · Evolve. Certified by BACKBENCHERS.</p>
-      </footer>
+      {/* Founders & Platform Footer */}
+      <Footer />
 
       {/* Post-Login Device Selection Modal */}
       <DeviceModal
