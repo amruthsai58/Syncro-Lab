@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProblems } from '../context/ProblemContext';
-import type { Difficulty, Problem } from '../types';
+import type { Difficulty } from '../types';
 import {
-  ShieldCheck, ShieldAlert, KeyRound, Plus, Trash2, Edit3, ArrowLeft,
-  CheckCircle2, AlertTriangle, Layers, Award, Sparkles, Search, RefreshCw, X, Lock
+  ShieldCheck, KeyRound, Plus, Trash2, Edit3, ArrowLeft,
+  CheckCircle2, AlertTriangle, Search, RefreshCw, X, Lock, Check
 } from 'lucide-react';
 
 export function AdminPage() {
@@ -28,9 +28,12 @@ export function AdminPage() {
   const [formError, setFormError] = useState('');
   const [successToast, setSuccessToast] = useState('');
 
-  // Key Settings Modal
+  // Key Settings Modal State
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [currentKeyInput, setCurrentKeyInput] = useState('');
   const [newKeyInput, setNewKeyInput] = useState('');
+  const [confirmKeyInput, setConfirmKeyInput] = useState('');
+  const [keyError, setKeyError] = useState('');
   const [keySuccess, setKeySuccess] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
@@ -44,7 +47,7 @@ export function AdminPage() {
       setAuthError('');
       setInputKey('');
     } else {
-      setAuthError('Invalid Admin Key. Access Denied.');
+      setAuthError('Invalid Admin Passcode. Access Denied.');
     }
   };
 
@@ -100,17 +103,33 @@ export function AdminPage() {
 
   const handleUpdateKey = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newKeyInput.trim().length < 4) {
-      setKeySuccess('Key must be at least 4 characters long.');
+    setKeyError('');
+    setKeySuccess('');
+
+    if (currentKeyInput.trim() !== adminKey.trim()) {
+      setKeyError('Current passcode is incorrect.');
       return;
     }
+
+    if (newKeyInput.trim().length < 4) {
+      setKeyError('New passcode must be at least 4 characters long.');
+      return;
+    }
+
+    if (newKeyInput.trim() !== confirmKeyInput.trim()) {
+      setKeyError('New passcode and confirmation do not match.');
+      return;
+    }
+
     setAdminKey(newKeyInput.trim());
-    setKeySuccess('Master Key updated successfully!');
+    setKeySuccess('Master Passcode successfully updated!');
     setTimeout(() => {
       setKeySuccess('');
       setIsKeyModalOpen(false);
+      setCurrentKeyInput('');
       setNewKeyInput('');
-    }, 1500);
+      setConfirmKeyInput('');
+    }, 1800);
   };
 
   // Filter problems
@@ -176,7 +195,7 @@ export function AdminPage() {
 
           <div className="pt-3 border-t border-syncro-black-border text-center space-y-2">
             <p className="text-[11px] text-slate-500 font-mono">
-              Default Master Key: <strong className="text-syncro-gold">SYNCRO-ADMIN-2026</strong>
+              Default Master Passcode: <strong className="text-syncro-gold">BACKBENCHERS@SNPSU</strong>
             </p>
             <Link to="/problems" className="inline-flex items-center gap-1.5 text-xs text-syncro-white-dim hover:text-white transition-colors">
               <ArrowLeft size={13} /> Return to Problems Catalog
@@ -215,10 +234,10 @@ export function AdminPage() {
             </button>
 
             <button
-              onClick={() => setIsKeyModalOpen(true)}
+              onClick={() => { setIsKeyModalOpen(true); setKeyError(''); setKeySuccess(''); }}
               className="btn-ghost px-4 py-2.5 text-xs gap-1.5"
             >
-              <KeyRound size={14} className="text-syncro-gold" /> Change Key
+              <KeyRound size={14} className="text-syncro-gold" /> Change Passcode
             </button>
 
             <button
@@ -500,36 +519,77 @@ export function AdminPage() {
       {/* ─── MODAL 2: CHANGE MASTER KEY ─── */}
       {isKeyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-syncro-black-card border border-syncro-gold/40 rounded-3xl p-6 shadow-gold-lg space-y-4 text-white">
-            <div className="flex items-center justify-between pb-2 border-b border-syncro-black-border">
-              <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-                <KeyRound size={16} className="text-syncro-gold" /> Change Master Admin Key
+          <div className="relative w-full max-w-md bg-syncro-black-card border border-syncro-gold/40 rounded-3xl p-6 sm:p-8 shadow-gold-lg space-y-4 text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-syncro-black-border">
+              <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                <KeyRound size={18} className="text-syncro-gold" /> Change Admin Master Passcode
               </h3>
-              <button onClick={() => setIsKeyModalOpen(false)}><X size={16} /></button>
+              <button onClick={() => setIsKeyModalOpen(false)} className="text-syncro-white-dim hover:text-white">
+                <X size={18} />
+              </button>
             </div>
 
-            {keySuccess && (
-              <p className="text-emerald-400 text-xs font-bold bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/40">
-                {keySuccess}
+            {keyError && (
+              <p className="text-rose-400 text-xs font-semibold bg-rose-950/50 p-2.5 rounded-xl border border-rose-800/40 flex items-center gap-1.5">
+                <AlertTriangle size={14} /> {keyError}
               </p>
             )}
 
-            <form onSubmit={handleUpdateKey} className="space-y-4">
+            {keySuccess && (
+              <p className="text-emerald-400 text-xs font-bold bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/40 flex items-center gap-1.5">
+                <Check size={14} /> {keySuccess}
+              </p>
+            )}
+
+            <form onSubmit={handleUpdateKey} className="space-y-3.5 text-xs">
               <div>
-                <label className="text-[11px] uppercase font-bold text-syncro-gold mb-1 block">New Passcode:</label>
+                <label className="text-[11px] uppercase font-bold text-syncro-gold mb-1 block">Current Passcode:</label>
                 <input
-                  type="text"
-                  value={newKeyInput}
-                  onChange={e => setNewKeyInput(e.target.value)}
-                  placeholder="Enter new master key..."
+                  type="password"
+                  value={currentKeyInput}
+                  onChange={e => setCurrentKeyInput(e.target.value)}
+                  placeholder="Enter current passcode..."
                   className="w-full bg-syncro-black text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-syncro-black-border outline-none focus:border-syncro-gold"
                   required
                 />
               </div>
 
-              <button type="submit" className="w-full btn-gold py-2.5 text-syncro-black font-extrabold text-xs">
-                Save New Passcode
-              </button>
+              <div>
+                <label className="text-[11px] uppercase font-bold text-syncro-gold mb-1 block">New Passcode:</label>
+                <input
+                  type="password"
+                  value={newKeyInput}
+                  onChange={e => setNewKeyInput(e.target.value)}
+                  placeholder="Enter new passcode (min 4 chars)..."
+                  className="w-full bg-syncro-black text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-syncro-black-border outline-none focus:border-syncro-gold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] uppercase font-bold text-syncro-gold mb-1 block">Confirm New Passcode:</label>
+                <input
+                  type="password"
+                  value={confirmKeyInput}
+                  onChange={e => setConfirmKeyInput(e.target.value)}
+                  placeholder="Re-enter new passcode..."
+                  className="w-full bg-syncro-black text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-syncro-black-border outline-none focus:border-syncro-gold"
+                  required
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsKeyModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-syncro-black hover:bg-syncro-black-hover border border-syncro-black-border text-syncro-white-dim text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 btn-gold py-2.5 text-syncro-black font-extrabold text-xs shadow-gold-sm">
+                  Save Passcode
+                </button>
+              </div>
             </form>
           </div>
         </div>

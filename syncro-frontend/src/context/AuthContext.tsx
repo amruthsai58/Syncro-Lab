@@ -29,7 +29,7 @@ const USER_KEY = 'syncro_user';
 const DEVICE_KEY = 'syncro_device_preference';
 const ADMIN_AUTH_KEY = 'syncro_admin_authorized';
 const ADMIN_MASTER_KEY = 'syncro_admin_master_passcode';
-const DEFAULT_MASTER_KEY = 'SYNCRO-ADMIN-2026';
+const DEFAULT_MASTER_KEY = 'BACKBENCHERS@SNPSU';
 const API_BASE = 'http://localhost:3001/api';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
