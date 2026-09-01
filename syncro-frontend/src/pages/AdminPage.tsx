@@ -193,10 +193,7 @@ export function AdminPage() {
             </button>
           </form>
 
-          <div className="pt-3 border-t border-syncro-black-border text-center space-y-2">
-            <p className="text-[11px] text-slate-500 font-mono">
-              Default Master Passcode: <strong className="text-syncro-gold">BACKBENCHERS@SNPSU</strong>
-            </p>
+          <div className="pt-3 border-t border-syncro-black-border text-center">
             <Link to="/problems" className="inline-flex items-center gap-1.5 text-xs text-syncro-white-dim hover:text-white transition-colors">
               <ArrowLeft size={13} /> Return to Problems Catalog
             </Link>
