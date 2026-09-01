@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './', // Relative base path for seamless GitHub Pages deployment
   plugins: [react()],
   optimizeDeps: {
     force: true,

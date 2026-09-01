@@ -61,16 +61,20 @@ export function CertificateModal({ certificate, isOpen, onClose }: CertificateMo
   if (!isOpen) return null;
 
   const theme = TIER_THEMES[certificate.tier];
-
-  // Active host IP for mobile phone camera scanning
   const activeHost = customHost.trim() || lanIp || (window.location.hostname === 'localhost' ? '172.17.88.131' : window.location.hostname);
   const port = window.location.port ? `:${window.location.port}` : ':5173';
   const protocol = window.location.protocol;
-  
-  // Compact, high-contrast, fast-scanning short URL
-  const verificationUrl = `${protocol}//${activeHost}${port}/v/${certificate.verificationCode}`;
 
-  const localVerificationUrl = `${window.location.origin}/v/${certificate.verificationCode}`;
+  const isGithubPages = window.location.hostname.includes('github.io');
+  const baseUrl = isGithubPages
+    ? `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}`
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? `${protocol}//${activeHost}${port}`
+    : window.location.origin;
+
+  // Universal verification URL (works on GitHub Pages, mobile scanners, and local LAN)
+  const verificationUrl = `${baseUrl}/#/verify/${certificate.verificationCode}`;
+  const localVerificationUrl = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/#/verify/${certificate.verificationCode}`;
 
   const handlePrint = () => {
     window.print();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NavBar } from './components/NavBar';
 import { LandingPage } from './pages/LandingPage';
@@ -48,10 +48,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <AppShell />
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

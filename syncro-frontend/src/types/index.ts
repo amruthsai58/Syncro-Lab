@@ -36,7 +36,7 @@ export interface User {
   mediumSolved: number;
   hardSolved: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   badges: Badge[];
   certificates?: Certificate[];
 }
@@ -74,12 +74,12 @@ export interface Problem {
   constraints: string[];
   tags: string[];
   companyTags: string[];
-  hints: string[];
+  hints?: string[];
   starterCode: StarterCode;
-  testCases: TestCase[];
+  testCases?: TestCase[];
   acceptanceRate: number;
   totalSubmissions: number;
-  totalAccepted: number;
+  totalAccepted?: number;
 }
 
 export interface ProblemListItem {
