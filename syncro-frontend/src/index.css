@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Montserrat:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Reset & Base ───────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #0A0A0A;
+    color: #FFFFFF;
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 162, 75, 0.14) 0%, transparent 70%),
+      radial-gradient(at 100% 100%, rgba(201, 162, 75, 0.05) 0px, transparent 50%);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #0A0A0A; }
+  ::-webkit-scrollbar-thumb { background: #2A2416; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C9A24B; }
+
+  ::selection {
+    background: rgba(201, 162, 75, 0.35);
+    color: #F5D98B;
+  }
+}
+
+/* ─── Components ─────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Buttons ─── */
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-200;
+    background: linear-gradient(135deg, #F5D98B 0%, #C9A24B 50%, #8E6B23 100%);
+    color: #0A0A0A;
+    box-shadow: 0 0 20px rgba(201, 162, 75, 0.45);
+  }
+  .btn-gold:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 35px rgba(201, 162, 75, 0.7);
+    filter: brightness(1.08);
+  }
+  .btn-gold:active { transform: translateY(0); }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-slate-300 bg-black/40 border border-slate-800 transition-all duration-200;
+  }
+  .btn-ghost:hover {
+    @apply text-white border-amber-500/40 bg-white/5;
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(201, 162, 75, 0.2);
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-amber-300 border border-amber-500/40 transition-all duration-200;
+    background: transparent;
+  }
+  .btn-outline-gold:hover {
+    background: rgba(201, 162, 75, 0.15);
+    box-shadow: 0 0 20px rgba(201, 162, 75, 0.35);
+  }
+
+  /* ── Cards ── */
+  .card-glass {
+    background: rgba(18, 18, 18, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(201, 162, 75, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    @apply rounded-2xl;
+  }
+  .card-glass:hover {
+    border-color: rgba(201, 162, 75, 0.4);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(201, 162, 75, 0.15);
+  }
+
+  .card-solid {
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    @apply rounded-2xl;
+  }
+
+  /* ── Gold Shimmer Typography ── */
+  .text-gold-gradient {
+    background: linear-gradient(90deg, #F5D98B 0%, #C9A24B 40%, #F5D98B 80%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: goldShimmer 3s linear infinite;
+  }
+
+  /* ── Hexagon styling ── */
+  .hexagon {
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  }
+
+  .hex-glow {
+    filter: drop-shadow(0 0 16px rgba(201, 162, 75, 0.5));
+  }
+
+  /* ── Difficulty Badges ── */
+  .badge-easy {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ADE80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  .badge-medium {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: rgba(201, 162, 75, 0.15);
+    color: #F5D98B;
+    border: 1px solid rgba(201, 162, 75, 0.35);
+  }
+  .badge-hard {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: rgba(239, 68, 68, 0.12);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  /* ── Verdict Badges ── */
+  .verdict-accepted {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ADE80;
+    border: 1px solid #22C55E;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+  }
+  .verdict-wrong {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold;
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border: 1px solid #EF4444;
+  }
+  .verdict-tle {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold;
+    background: rgba(201, 162, 75, 0.15);
+    color: #F5D98B;
+    border: 1px solid #C9A24B;
+  }
+  .verdict-error {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold;
+    background: rgba(239, 68, 68, 0.1);
+    color: #FCA5A5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .verdict-pending {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold;
+    background: rgba(201, 162, 75, 0.1);
+    color: #F5D98B;
+    border: 1px solid rgba(201, 162, 75, 0.3);
+  }
+
+  /* ── Inputs ── */
+  .input-dark {
+    @apply w-full bg-black/60 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all duration-200;
+  }
+  .input-dark:focus {
+    border-color: #C9A24B;
+    box-shadow: 0 0 20px rgba(201, 162, 75, 0.3);
+  }
+
+  /* ── Dividers ── */
+  .divider-gold {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 75, 0.4) 25%, #F5D98B 50%, rgba(201, 162, 75, 0.4) 75%, transparent);
+    box-shadow: 0 0 10px rgba(201, 162, 75, 0.5);
+  }
+
+  /* ── Code block ── */
+  .code-block {
+    @apply bg-black/70 text-slate-100 border border-slate-800 rounded-xl p-4 font-mono text-sm;
+  }
+}
+
+/* ─── Ambient Hex Pattern ───────────────────────────────────────────────── */
+.hex-grid-bg {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34z' fill='none' stroke='rgba(201,162,75,0.06)' stroke-width='1.2'/%3E%3Cpath d='M28 100L0 84V50l28-16 28 16v34z' fill='none' stroke='rgba(201,162,75,0.06)' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-size: 56px 100px;
+}
+
+/* ─── Certificate Print Styles (White Background for Printing) ──────────── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-certificate, #printable-certificate * {
+    visibility: visible;
+  }
+  #printable-certificate {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    z-index: 999999;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

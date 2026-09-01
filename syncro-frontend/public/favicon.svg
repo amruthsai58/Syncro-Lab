@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C9A24B"/>
+      <stop offset="100%" style="stop-color:#F5D98B"/>
+    </linearGradient>
+  </defs>
+  <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5" fill="url(#goldGrad)"/>
+  <polygon points="50,20 78,35.5 78,64.5 50,80 22,64.5 22,35.5" fill="#0A0A0A"/>
+  <text x="50" y="58" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="22" fill="#F5D98B">&lt;/&gt;</text>
+</svg>

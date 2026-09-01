@@ -1,0 +1,13 @@
+{
+  "name": "syncro-backend",
+  "version": "1.0.0",
+  "description": "SYNCRO LAB API — Code. Practice. Evolve.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["syncrolab", "coding-platform", "judge"],
+  "author": "SYNCRO LAB",
+  "license": "ISC"
+}
