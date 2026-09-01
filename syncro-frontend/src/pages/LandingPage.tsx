@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HexagonLogo, HexLoader } from '../components/HexagonLogo';
 import { DeviceModal } from '../components/DeviceModal';
-import { Footer, FOUNDERS } from '../components/Footer';
-import { Code2, TrendingUp, Users, ArrowRight, Star, Zap, Award, CheckCircle2, ShieldCheck, QrCode, ExternalLink } from 'lucide-react';
+import { Footer } from '../components/Footer';
+import { Code2, TrendingUp, Users, ArrowRight, Star, Zap, Award, CheckCircle2, ShieldCheck, QrCode } from 'lucide-react';
 
 const PILLARS = [
   {
@@ -297,59 +297,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Dedicated Founders & Leadership Section on First Page */}
-      <section className="relative py-16 px-4 bg-syncro-black-soft/70 border-t border-syncro-black-border">
-        <div className="max-w-6xl mx-auto space-y-10">
-          <div className="text-center space-y-2">
-            <p className="text-syncro-gold text-xs tracking-widest uppercase font-extrabold">The Visionaries Behind SYNCRO LAB</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Founding Team</h2>
-            <p className="text-syncro-white-muted text-sm max-w-xl mx-auto">
-              Connecting elite algorithmic education with verifiable proof-of-mastery certificates.
-            </p>
-            <div className="divider-gold w-24 mx-auto mt-3" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FOUNDERS.map((f, i) => (
-              <a
-                key={f.name}
-                href={f.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group p-5 rounded-3xl bg-syncro-black border border-syncro-gold/25 hover:border-syncro-gold hover:shadow-gold-sm transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
-              >
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-syncro-gold/15 border border-syncro-gold/40 flex items-center justify-center text-syncro-gold font-mono font-black text-sm group-hover:scale-105 transition-transform">
-                      0{i + 1}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-white group-hover:text-syncro-gold transition-colors">
-                        {f.name}
-                      </h3>
-                      <p className="text-[11px] text-syncro-gold/80 font-semibold font-mono">
-                        Founder & Co-Creator
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-syncro-black-border flex items-center justify-between text-xs">
-                  <span className="text-syncro-white-dim text-[11px] font-mono truncate max-w-[180px]">
-                    {f.name.toLowerCase().replace(/\s+/g, '')}
-                  </span>
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-xl bg-[#0077B5]/20 text-[#0077B5] border border-[#0077B5]/30 group-hover:bg-[#0077B5] group-hover:text-white transition-all font-bold text-[11px]">
-                    <span>LinkedIn</span>
-                    <ExternalLink size={12} />
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Founders & Platform Footer */}
+      {/* Founders & Platform Footer (Rendered once) */}
       <Footer />
 
       {/* Post-Login Device Selection Modal */}
