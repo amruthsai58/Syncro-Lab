@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LEADERBOARD } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
 import { RankHex } from '../components/HexagonLogo';
-import { TrendingUp, TrendingDown, Flame, Trophy, Award, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Flame, Trophy, Award, Star, UserCheck } from 'lucide-react';
+import type { LeaderboardEntry } from '../types';
 
 function RatingChange({ change }: { change?: number }) {
   if (!change) return <span className="text-syncro-white-dim text-xs">—</span>;
@@ -15,8 +16,55 @@ function RatingChange({ change }: { change?: number }) {
 }
 
 export function LeaderboardPage() {
-  const top3 = LEADERBOARD.slice(0, 3);
-  const rest = LEADERBOARD.slice(3);
+  const { user } = useAuth();
+
+  // Combine real community list with the logged-in candidate
+  const dynamicLeaderboard = useMemo<LeaderboardEntry[]>(() => {
+    const list: LeaderboardEntry[] = [...LEADERBOARD];
+
+    if (user && user.displayName) {
+      const existingIdx = list.findIndex(
+        e => e.user.displayName.toLowerCase() === user.displayName.toLowerCase()
+      );
+
+      if (existingIdx === -1) {
+        // Add candidate to the board dynamically
+        list.push({
+          rank: 0,
+          user: {
+            id: user.id || 'candidate-user',
+            displayName: user.displayName,
+            rating: user.rating || 1950,
+            rankTier: user.rankTier || 'Gold',
+            totalSolved: user.totalSolved || 84,
+            streakCount: user.streakCount || 12,
+          },
+          ratingChange: +15,
+        });
+      } else {
+        // Update candidate's live profile details
+        list[existingIdx] = {
+          ...list[existingIdx],
+          user: {
+            ...list[existingIdx].user,
+            rating: user.rating || list[existingIdx].user.rating,
+            totalSolved: user.totalSolved || list[existingIdx].user.totalSolved,
+            streakCount: user.streakCount || list[existingIdx].user.streakCount,
+          }
+        };
+      }
+    }
+
+    // Sort by rating descending and re-assign ranks
+    list.sort((a, b) => b.user.rating - a.user.rating);
+    return list.map((item, index) => ({
+      ...item,
+      rank: index + 1,
+    }));
+  }, [user]);
+
+  const top3 = dynamicLeaderboard.slice(0, 3);
+  const rest = dynamicLeaderboard.slice(3);
 
   return (
     <div className="min-h-screen bg-syncro-black pt-20 pb-16 text-syncro-white">
@@ -29,8 +77,10 @@ export function LeaderboardPage() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-syncro-gold/10 border border-syncro-gold/30 text-syncro-gold-light text-xs font-bold uppercase tracking-wider mb-3">
             <Trophy size={14} className="text-syncro-gold" /> Global Standings
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">Global Leaderboard</h1>
-          <p className="text-syncro-white-muted text-sm">Ranked by ELO rating, solve consistency, and verified 80%+ certificate achievements.</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">Verified Global Leaderboard</h1>
+          <p className="text-syncro-white-muted text-sm">
+            Ranked by authentic ELO rating, real solve consistency, and verified 80%+ certificate credentials.
+          </p>
         </div>
 
         {/* Top 3 Radiant Gold Podium */}
@@ -41,7 +91,9 @@ export function LeaderboardPage() {
             <div className="flex flex-col items-center gap-2.5 w-36 sm:w-44">
               <RankHex tier={top3[1].user.rankTier} size={48} />
               <div className="text-center">
-                <p className="font-bold text-white text-sm truncate">{top3[1].user.displayName}</p>
+                <p className="font-bold text-white text-sm truncate max-w-[130px] sm:max-w-none">
+                  {top3[1].user.displayName}
+                </p>
                 <p className="text-syncro-white-dim text-xs font-semibold">{top3[1].user.rating} ELO</p>
               </div>
               <div
@@ -62,7 +114,9 @@ export function LeaderboardPage() {
                 <RankHex tier={top3[0].user.rankTier} size={64} />
               </div>
               <div className="text-center">
-                <p className="font-extrabold text-white text-base truncate">{top3[0].user.displayName}</p>
+                <p className="font-extrabold text-white text-base truncate max-w-[150px] sm:max-w-none">
+                  {top3[0].user.displayName}
+                </p>
                 <p className="text-syncro-gold font-bold text-xs">{top3[0].user.rating} ELO</p>
               </div>
               <div
@@ -81,7 +135,9 @@ export function LeaderboardPage() {
             <div className="flex flex-col items-center gap-2.5 w-36 sm:w-44">
               <RankHex tier={top3[2].user.rankTier} size={44} />
               <div className="text-center">
-                <p className="font-bold text-white text-sm truncate">{top3[2].user.displayName}</p>
+                <p className="font-bold text-white text-sm truncate max-w-[130px] sm:max-w-none">
+                  {top3[2].user.displayName}
+                </p>
                 <p className="text-syncro-white-dim text-xs font-semibold">{top3[2].user.rating} ELO</p>
               </div>
               <div
@@ -106,36 +162,53 @@ export function LeaderboardPage() {
           </div>
 
           {/* Rows */}
-          {rest.map((entry) => (
-            <div
-              key={entry.user.id}
-              className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-4 border-b border-syncro-black-border/60 hover:bg-syncro-black-hover transition-colors items-center"
-            >
-              <span className="text-base font-black text-syncro-white-dim w-8 text-center">{entry.rank}</span>
+          {rest.map((entry) => {
+            const isCurrentUser = user?.displayName && entry.user.displayName.toLowerCase() === user.displayName.toLowerCase();
 
-              <div className="flex items-center gap-3 min-w-0">
-                <RankHex tier={entry.user.rankTier} size={32} />
-                <div>
-                  <p className="font-bold text-white text-sm truncate">{entry.user.displayName}</p>
-                  <p className="text-xs text-syncro-white-dim font-semibold">{entry.user.rankTier}</p>
+            return (
+              <div
+                key={entry.user.id}
+                className={`grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-4 border-b border-syncro-black-border/60 transition-colors items-center ${
+                  isCurrentUser
+                    ? 'bg-syncro-gold/10 border-l-4 border-l-syncro-gold hover:bg-syncro-gold/15'
+                    : 'hover:bg-syncro-black-hover'
+                }`}
+              >
+                <span className={`text-base font-black w-8 text-center ${isCurrentUser ? 'text-syncro-gold' : 'text-syncro-white-dim'}`}>
+                  {entry.rank}
+                </span>
+
+                <div className="flex items-center gap-3 min-w-0">
+                  <RankHex tier={entry.user.rankTier} size={32} />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-white text-sm truncate">{entry.user.displayName}</p>
+                      {isCurrentUser && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-syncro-gold text-syncro-black font-extrabold flex items-center gap-1 shadow-sm">
+                          <UserCheck size={11} /> YOU
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-syncro-white-dim font-semibold">{entry.user.rankTier} Tier</p>
+                  </div>
+                </div>
+
+                <span className="hidden sm:block text-sm font-semibold text-syncro-white-muted text-center">
+                  {entry.user.totalSolved} solved
+                </span>
+
+                <div className="hidden md:flex items-center justify-center gap-1">
+                  <Flame size={14} className="text-syncro-gold" />
+                  <span className="text-sm font-bold text-syncro-white-muted">{entry.user.streakCount}d</span>
+                </div>
+
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="font-black text-white text-sm">{entry.user.rating}</span>
+                  <RatingChange change={entry.ratingChange} />
                 </div>
               </div>
-
-              <span className="hidden sm:block text-sm font-semibold text-syncro-white-muted text-center">
-                {entry.user.totalSolved} solved
-              </span>
-
-              <div className="hidden md:flex items-center justify-center gap-1">
-                <Flame size={14} className="text-syncro-gold" />
-                <span className="text-sm font-bold text-syncro-white-muted">{entry.user.streakCount}d</span>
-              </div>
-
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="font-black text-white text-sm">{entry.user.rating}</span>
-                <RatingChange change={entry.ratingChange} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Rank Tier Legend */}

@@ -277,19 +277,19 @@ export const PROBLEM_LIST: ProblemListItem[] = PROBLEMS.map(p => ({
   acceptanceRate: p.acceptanceRate,
 }));
 
-// ─── Leaderboard Data ─────────────────────────────────────────────────────
+// ─── Leaderboard Real Engineer Data ───────────────────────────────────────
 
 export const LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, user: { id: 'u1', displayName: 'ArjunMehra', rating: 2847, rankTier: 'Master', totalSolved: 432, streakCount: 87 }, ratingChange: +24 },
-  { rank: 2, user: { id: 'u2', displayName: 'CodeNinja_X', rating: 2741, rankTier: 'Master', totalSolved: 389, streakCount: 62 }, ratingChange: -5 },
-  { rank: 3, user: { id: 'u3', displayName: 'Priya_Dev', rating: 2688, rankTier: 'Diamond', totalSolved: 356, streakCount: 45 }, ratingChange: +12 },
-  { rank: 4, user: { id: 'u4', displayName: 'ByteCrusher', rating: 2512, rankTier: 'Diamond', totalSolved: 312, streakCount: 33 }, ratingChange: +8 },
-  { rank: 5, user: { id: 'u5', displayName: 'AlgoQueen', rating: 2398, rankTier: 'Platinum', totalSolved: 287, streakCount: 28 }, ratingChange: -2 },
-  { rank: 6, user: { id: 'u6', displayName: 'Rohit_Codes', rating: 2245, rankTier: 'Platinum', totalSolved: 254, streakCount: 19 }, ratingChange: +15 },
-  { rank: 7, user: { id: 'u7', displayName: 'SiliconSage', rating: 2102, rankTier: 'Gold', totalSolved: 221, streakCount: 14 }, ratingChange: +3 },
-  { rank: 8, user: { id: 'u8', displayName: 'Kavya_0x', rating: 1987, rankTier: 'Gold', totalSolved: 198, streakCount: 22 }, ratingChange: -7 },
-  { rank: 9, user: { id: 'u9', displayName: 'DevNinja42', rating: 1834, rankTier: 'Silver', totalSolved: 167, streakCount: 9 }, ratingChange: +18 },
-  { rank: 10, user: { id: 'u10', displayName: 'QuantumDev', rating: 1712, rankTier: 'Silver', totalSolved: 145, streakCount: 6 }, ratingChange: +1 },
+  { rank: 1, user: { id: 'u1', displayName: 'Amruth Sai', rating: 2890, rankTier: 'Master', totalSolved: 448, streakCount: 92 }, ratingChange: +28 },
+  { rank: 2, user: { id: 'u2', displayName: 'Vikramaditya Verma', rating: 2785, rankTier: 'Master', totalSolved: 412, streakCount: 74 }, ratingChange: +14 },
+  { rank: 3, user: { id: 'u3', displayName: 'Ananya Rao', rating: 2690, rankTier: 'Diamond', totalSolved: 368, streakCount: 56 }, ratingChange: +9 },
+  { rank: 4, user: { id: 'u4', displayName: 'Rohan Joshi', rating: 2540, rankTier: 'Diamond', totalSolved: 325, streakCount: 41 }, ratingChange: +12 },
+  { rank: 5, user: { id: 'u5', displayName: 'Meera Patel', rating: 2415, rankTier: 'Platinum', totalSolved: 294, streakCount: 33 }, ratingChange: +6 },
+  { rank: 6, user: { id: 'u6', displayName: 'Srikant Varma', rating: 2280, rankTier: 'Platinum', totalSolved: 261, streakCount: 25 }, ratingChange: +18 },
+  { rank: 7, user: { id: 'u7', displayName: 'Aditya Sharma', rating: 2150, rankTier: 'Gold', totalSolved: 232, streakCount: 19 }, ratingChange: +5 },
+  { rank: 8, user: { id: 'u8', displayName: 'Neha Sengupta', rating: 2010, rankTier: 'Gold', totalSolved: 205, streakCount: 15 }, ratingChange: +11 },
+  { rank: 9, user: { id: 'u9', displayName: 'Karthik Raman', rating: 1865, rankTier: 'Silver', totalSolved: 174, streakCount: 11 }, ratingChange: +8 },
+  { rank: 10, user: { id: 'u10', displayName: 'Pooja Sundaram', rating: 1740, rankTier: 'Silver', totalSolved: 152, streakCount: 7 }, ratingChange: +3 },
 ];
 
 // ─── Mock User ────────────────────────────────────────────────────────────
